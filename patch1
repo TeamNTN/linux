@@ -1,0 +1,40 @@
+From 00d43d13da6c3424101aebabefab9e97e6318bee Mon Sep 17 00:00:00 2001
+From: Ard Biesheuvel <ardb@kernel.org>
+Date: Tue, 21 Sep 2021 15:31:23 +0100
+Subject: [PATCH] ARM: 9125/1: fix incorrect use of get_kernel_nofault()
+
+Commit 344179fc7ef4 ("ARM: 9106/1: traps: use get_kernel_nofault instead
+of set_fs()") replaced an occurrence of __get_user() with
+get_kernel_nofault(), but inverted the sense of the conditional in the
+process, resulting in no values to be printed at all.
+
+I.e., every exception stack now looks like this:
+
+Exception stack(0xc18d1fb0 to 0xc18d1ff8)
+1fa0:                                     ???????? ???????? ???????? ????????
+1fc0: ???????? ???????? ???????? ???????? ???????? ???????? ???????? ????????
+1fe0: ???????? ???????? ???????? ???????? ???????? ????????
+
+which is rather unhelpful.
+
+Fixes: 344179fc7ef4 ("ARM: 9106/1: traps: use get_kernel_nofault instead of set_fs()")
+Signed-off-by: Ard Biesheuvel <ardb@kernel.org>
+Reviewed-by: Arnd Bergmann <arnd@arndb.de>
+Signed-off-by: Russell King (Oracle) <rmk+kernel@armlinux.org.uk>
+---
+ arch/arm/kernel/traps.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm/kernel/traps.c b/arch/arm/kernel/traps.c
+index 4a7edc6e848f3a..195dff58bafc73 100644
+--- a/arch/arm/kernel/traps.c
++++ b/arch/arm/kernel/traps.c
+@@ -136,7 +136,7 @@ static void dump_mem(const char *lvl, const char *str, unsigned long bottom,
+ 		for (p = first, i = 0; i < 8 && p < top; i++, p += 4) {
+ 			if (p >= bottom && p < top) {
+ 				unsigned long val;
+-				if (get_kernel_nofault(val, (unsigned long *)p))
++				if (!get_kernel_nofault(val, (unsigned long *)p))
+ 					sprintf(str + i * 9, " %08lx", val);
+ 				else
+ 					sprintf(str + i * 9, " ????????");
