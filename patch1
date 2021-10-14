@@ -1,0 +1,571 @@
+From 0764e365dacd0b8f75c1736f9236be280649bd18 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Cl=C3=A9ment=20B=C5=93sch?= <u@pkh.me>
+Date: Sun, 5 Sep 2021 02:20:27 +0200
+Subject: arm64: dts: allwinner: h5: NanoPI Neo 2: Fix ethernet node
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RX and TX delay are provided by ethernet PHY. Reflect that in ethernet
+node.
+
+Fixes: 44a94c7ef989 ("arm64: dts: allwinner: H5: Restore EMAC changes")
+Signed-off-by: Clément Bœsch <u@pkh.me>
+Reviewed-by: Jernej Skrabec <jernej.skrabec@gmail.com>
+Reviewed-by: Andrew Lunn <andrew@lunn.ch>
+Signed-off-by: Maxime Ripard <maxime@cerno.tech>
+Link: https://lore.kernel.org/r/20210905002027.171984-1-u@pkh.me
+---
+ arch/arm64/boot/dts/allwinner/sun50i-h5-nanopi-neo2.dts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h5-nanopi-neo2.dts b/arch/arm64/boot/dts/allwinner/sun50i-h5-nanopi-neo2.dts
+index 02f8e72f0cad1..05486cccee1c4 100644
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h5-nanopi-neo2.dts
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h5-nanopi-neo2.dts
+@@ -75,7 +75,7 @@
+ 	pinctrl-0 = <&emac_rgmii_pins>;
+ 	phy-supply = <&reg_gmac_3v3>;
+ 	phy-handle = <&ext_rgmii_phy>;
+-	phy-mode = "rgmii";
++	phy-mode = "rgmii-id";
+ 	status = "okay";
+ };
+ 
+-- 
+cgit 1.2.3-1.el7
+
+
+From 55dd7e059098ce4bd0a55c251cb78e74604abb57 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Bastien=20Roucari=C3=A8s?= <rouca@debian.org>
+Date: Thu, 16 Sep 2021 08:17:21 +0000
+Subject: ARM: dts: sun7i: A20-olinuxino-lime2: Fix ethernet phy-mode
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Commit bbc4d71d6354 ("net: phy: realtek: fix rtl8211e rx/tx delay
+config") sets the RX/TX delay according to the phy-mode property in the
+device tree. For the A20-olinuxino-lime2 board this is "rgmii", which is the
+wrong setting.
+
+Following the example of a900cac3750b ("ARM: dts: sun7i: a20: bananapro:
+Fix ethernet phy-mode") the phy-mode is changed to "rgmii-id" which gets
+the Ethernet working again on this board.
+
+Signed-off-by: Bastien Roucariès <rouca@debian.org>
+Signed-off-by: Maxime Ripard <maxime@cerno.tech>
+Link: https://lore.kernel.org/r/20210916081721.237137-1-rouca@debian.org
+---
+ arch/arm/boot/dts/sun7i-a20-olinuxino-lime2.dts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm/boot/dts/sun7i-a20-olinuxino-lime2.dts b/arch/arm/boot/dts/sun7i-a20-olinuxino-lime2.dts
+index 8077f1716fbc8..ecb91fb899ff3 100644
+--- a/arch/arm/boot/dts/sun7i-a20-olinuxino-lime2.dts
++++ b/arch/arm/boot/dts/sun7i-a20-olinuxino-lime2.dts
+@@ -112,7 +112,7 @@
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&gmac_rgmii_pins>;
+ 	phy-handle = <&phy1>;
+-	phy-mode = "rgmii";
++	phy-mode = "rgmii-id";
+ 	status = "okay";
+ };
+ 
+-- 
+cgit 1.2.3-1.el7
+
+
+From f33eb7f29c16ba78db3221ee02346fd832274cdd Mon Sep 17 00:00:00 2001
+From: Jim Quinlan <jim2101024@gmail.com>
+Date: Tue, 14 Sep 2021 15:11:21 -0700
+Subject: reset: brcmstb-rescal: fix incorrect polarity of status bit
+
+The readl_poll_timeout() should complete when the status bit
+is a 1, not 0.
+
+Fixes: 4cf176e52397 ("reset: Add Broadcom STB RESCAL reset controller")
+Signed-off-by: Jim Quinlan <jim2101024@gmail.com>
+Signed-off-by: Florian Fainelli <f.fainelli@gmail.com>
+Link: https://lore.kernel.org/r/20210914221122.62315-1-f.fainelli@gmail.com
+Signed-off-by: Philipp Zabel <p.zabel@pengutronix.de>
+---
+ drivers/reset/reset-brcmstb-rescal.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/reset/reset-brcmstb-rescal.c b/drivers/reset/reset-brcmstb-rescal.c
+index b6f074d6a65f8..433fa0c40e477 100644
+--- a/drivers/reset/reset-brcmstb-rescal.c
++++ b/drivers/reset/reset-brcmstb-rescal.c
+@@ -38,7 +38,7 @@ static int brcm_rescal_reset_set(struct reset_controller_dev *rcdev,
+ 	}
+ 
+ 	ret = readl_poll_timeout(base + BRCM_RESCAL_STATUS, reg,
+-				 !(reg & BRCM_RESCAL_STATUS_BIT), 100, 1000);
++				 (reg & BRCM_RESCAL_STATUS_BIT), 100, 1000);
+ 	if (ret) {
+ 		dev_err(data->dev, "time out on SATA/PCIe rescal\n");
+ 		return ret;
+-- 
+cgit 1.2.3-1.el7
+
+
+From 4af160707d7197d671a5b0ad9899383b6cb7c067 Mon Sep 17 00:00:00 2001
+From: Geert Uytterhoeven <geert+renesas@glider.be>
+Date: Tue, 14 Sep 2021 11:15:59 +0200
+Subject: reset: pistachio: Re-enable driver selection
+
+After the retirement of MACH_PISTACHIO, the Pistachio Reset Driver is no
+longer auto-enabled when building a kernel for Pistachio systems.
+Worse, the driver cannot be enabled by the user at all (unless
+compile-testing), as the config symbol is invisible.
+
+Fix this partially by making the symbol visible again when compiling for
+MIPS, and dropping the useless default.  The user still has to enable
+the driver manually when building a kernel for Pistachio systems,
+though.
+
+Fixes: 104f942b2832ab13 ("MIPS: Retire MACH_PISTACHIO")
+Signed-off-by: Geert Uytterhoeven <geert+renesas@glider.be>
+Reviewed-by: Rahul Bedarkar <rahulbedarkar89@gmail.com>
+Reviewed-by: Jiaxun Yang <jiaxun.yang@flygoat.com>
+Link: https://lore.kernel.org/r/2c399e52540536df9c4006e46ef93fbccdde88db.1631610825.git.geert+renesas@glider.be
+Signed-off-by: Philipp Zabel <p.zabel@pengutronix.de>
+---
+ drivers/reset/Kconfig | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/reset/Kconfig b/drivers/reset/Kconfig
+index be799a5abf8a6..b0056ae5d463a 100644
+--- a/drivers/reset/Kconfig
++++ b/drivers/reset/Kconfig
+@@ -147,8 +147,8 @@ config RESET_OXNAS
+ 	bool
+ 
+ config RESET_PISTACHIO
+-	bool "Pistachio Reset Driver" if COMPILE_TEST
+-	default MACH_PISTACHIO
++	bool "Pistachio Reset Driver"
++	depends on MIPS || COMPILE_TEST
+ 	help
+ 	  This enables the reset driver for ImgTec Pistachio SoCs.
+ 
+-- 
+cgit 1.2.3-1.el7
+
+
+From c045ceb5a145d2a9a4bf33cbc55185ddf99f60ab Mon Sep 17 00:00:00 2001
+From: Mikko Perttunen <mperttunen@nvidia.com>
+Date: Wed, 15 Sep 2021 11:55:14 +0300
+Subject: reset: tegra-bpmp: Handle errors in BPMP response
+
+The return value from tegra_bpmp_transfer indicates the success or
+failure of the IPC transaction with BPMP. If the transaction
+succeeded, we also need to check the actual command's result code.
+Add code to do this.
+
+Signed-off-by: Mikko Perttunen <mperttunen@nvidia.com>
+Link: https://lore.kernel.org/r/20210915085517.1669675-2-mperttunen@nvidia.com
+Signed-off-by: Philipp Zabel <p.zabel@pengutronix.de>
+---
+ drivers/reset/tegra/reset-bpmp.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/reset/tegra/reset-bpmp.c b/drivers/reset/tegra/reset-bpmp.c
+index 24d3395964cc4..4c5bba52b1059 100644
+--- a/drivers/reset/tegra/reset-bpmp.c
++++ b/drivers/reset/tegra/reset-bpmp.c
+@@ -20,6 +20,7 @@ static int tegra_bpmp_reset_common(struct reset_controller_dev *rstc,
+ 	struct tegra_bpmp *bpmp = to_tegra_bpmp(rstc);
+ 	struct mrq_reset_request request;
+ 	struct tegra_bpmp_message msg;
++	int err;
+ 
+ 	memset(&request, 0, sizeof(request));
+ 	request.cmd = command;
+@@ -30,7 +31,13 @@ static int tegra_bpmp_reset_common(struct reset_controller_dev *rstc,
+ 	msg.tx.data = &request;
+ 	msg.tx.size = sizeof(request);
+ 
+-	return tegra_bpmp_transfer(bpmp, &msg);
++	err = tegra_bpmp_transfer(bpmp, &msg);
++	if (err)
++		return err;
++	if (msg.rx.ret)
++		return -EINVAL;
++
++	return 0;
+ }
+ 
+ static int tegra_bpmp_reset_module(struct reset_controller_dev *rstc,
+-- 
+cgit 1.2.3-1.el7
+
+
+From 3ad60b4b3570937f3278509fe6797a5093ce53f8 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Pawe=C5=82=20Anikiel?= <pan@semihalf.com>
+Date: Mon, 20 Sep 2021 14:41:41 +0200
+Subject: reset: socfpga: add empty driver allowing consumers to probe
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The early reset driver doesn't ever probe, which causes consuming
+devices to be unable to probe. Add an empty driver to set this device
+as available, allowing consumers to probe.
+
+Signed-off-by: Paweł Anikiel <pan@semihalf.com>
+Link: https://lore.kernel.org/r/20210920124141.1166544-4-pan@semihalf.com
+Signed-off-by: Philipp Zabel <p.zabel@pengutronix.de>
+---
+ drivers/reset/reset-socfpga.c | 26 ++++++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+
+diff --git a/drivers/reset/reset-socfpga.c b/drivers/reset/reset-socfpga.c
+index 2a72f861f7983..8c6492e5693c7 100644
+--- a/drivers/reset/reset-socfpga.c
++++ b/drivers/reset/reset-socfpga.c
+@@ -92,3 +92,29 @@ void __init socfpga_reset_init(void)
+ 	for_each_matching_node(np, socfpga_early_reset_dt_ids)
+ 		a10_reset_init(np);
+ }
++
++/*
++ * The early driver is problematic, because it doesn't register
++ * itself as a driver. This causes certain device links to prevent
++ * consumer devices from probing. The hacky solution is to register
++ * an empty driver, whose only job is to attach itself to the reset
++ * manager and call probe.
++ */
++static const struct of_device_id socfpga_reset_dt_ids[] = {
++	{ .compatible = "altr,rst-mgr", },
++	{ /* sentinel */ },
++};
++
++static int reset_simple_probe(struct platform_device *pdev)
++{
++	return 0;
++}
++
++static struct platform_driver reset_socfpga_driver = {
++	.probe	= reset_simple_probe,
++	.driver = {
++		.name		= "socfpga-reset",
++		.of_match_table	= socfpga_reset_dt_ids,
++	},
++};
++builtin_platform_driver(reset_socfpga_driver);
+-- 
+cgit 1.2.3-1.el7
+
+
+From 82a4f329b133ad0de66bee12c0be5c67bb8aa188 Mon Sep 17 00:00:00 2001
+From: Frieder Schrempf <frieder.schrempf@kontron.de>
+Date: Fri, 15 Oct 2021 14:48:36 +0200
+Subject: arm64: dts: imx8mm-kontron: Make sure SOC and DRAM supply voltages
+ are correct
+
+It looks like the voltages for the SOC and DRAM supply weren't properly
+validated before. The datasheet and uboot-imx code tells us that VDD_SOC
+should be 800 mV in suspend and 850 mV in run mode. VDD_DRAM should be
+950 mV for DDR clock frequencies of up to 1.5 GHz.
+
+Let's fix these values to make sure the voltages are within the required
+range.
+
+Fixes: 8668d8b2e67f ("arm64: dts: Add the Kontron i.MX8M Mini SoMs and baseboards")
+Cc: stable@vger.kernel.org
+Signed-off-by: Frieder Schrempf <frieder.schrempf@kontron.de>
+Signed-off-by: Shawn Guo <shawnguo@kernel.org>
+---
+ arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-som.dtsi | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-som.dtsi b/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-som.dtsi
+index 9db9b90bf2bc9..7cf60c17c29b4 100644
+--- a/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-som.dtsi
++++ b/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-som.dtsi
+@@ -91,10 +91,12 @@
+ 			reg_vdd_soc: BUCK1 {
+ 				regulator-name = "buck1";
+ 				regulator-min-microvolt = <800000>;
+-				regulator-max-microvolt = <900000>;
++				regulator-max-microvolt = <850000>;
+ 				regulator-boot-on;
+ 				regulator-always-on;
+ 				regulator-ramp-delay = <3125>;
++				nxp,dvs-run-voltage = <850000>;
++				nxp,dvs-standby-voltage = <800000>;
+ 			};
+ 
+ 			reg_vdd_arm: BUCK2 {
+@@ -111,7 +113,7 @@
+ 			reg_vdd_dram: BUCK3 {
+ 				regulator-name = "buck3";
+ 				regulator-min-microvolt = <850000>;
+-				regulator-max-microvolt = <900000>;
++				regulator-max-microvolt = <950000>;
+ 				regulator-boot-on;
+ 				regulator-always-on;
+ 			};
+-- 
+cgit 1.2.3-1.el7
+
+
+From 256a24eba7f897c817fb0103dac73467d3789202 Mon Sep 17 00:00:00 2001
+From: Frieder Schrempf <frieder.schrempf@kontron.de>
+Date: Fri, 15 Oct 2021 14:48:37 +0200
+Subject: arm64: dts: imx8mm-kontron: Set lower limit of VDD_SNVS to 800 mV
+
+According to the datasheet the typical value for VDD_SNVS should be
+800 mV, so let's make sure that this is within the range of the
+regulator.
+
+Fixes: 8668d8b2e67f ("arm64: dts: Add the Kontron i.MX8M Mini SoMs and baseboards")
+Cc: stable@vger.kernel.org
+Signed-off-by: Frieder Schrempf <frieder.schrempf@kontron.de>
+Signed-off-by: Shawn Guo <shawnguo@kernel.org>
+---
+ arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-som.dtsi | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-som.dtsi b/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-som.dtsi
+index 7cf60c17c29b4..42bbbb3f532bc 100644
+--- a/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-som.dtsi
++++ b/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-som.dtsi
+@@ -152,7 +152,7 @@
+ 
+ 			reg_vdd_snvs: LDO2 {
+ 				regulator-name = "ldo2";
+-				regulator-min-microvolt = <850000>;
++				regulator-min-microvolt = <800000>;
+ 				regulator-max-microvolt = <900000>;
+ 				regulator-boot-on;
+ 				regulator-always-on;
+-- 
+cgit 1.2.3-1.el7
+
+
+From 6562d6e350284307e33ea10c7f46a6661ff22770 Mon Sep 17 00:00:00 2001
+From: Frieder Schrempf <frieder.schrempf@kontron.de>
+Date: Fri, 15 Oct 2021 14:48:38 +0200
+Subject: arm64: dts: imx8mm-kontron: Fix polarity of reg_rst_eth2
+
+The regulator reg_rst_eth2 should keep the reset signal of the USB ethernet
+adapter deasserted anytime. Fix the polarity and mark it as always-on.
+
+Anyway, using the regulator is only a workaround for the missing support of
+specifying a reset GPIO for USB devices in a generic way. As we don't
+have a solution for this at the moment, at least fix the current
+workaround.
+
+Fixes: 8668d8b2e67f ("arm64: dts: Add the Kontron i.MX8M Mini SoMs and baseboards")
+Cc: stable@vger.kernel.org
+Signed-off-by: Frieder Schrempf <frieder.schrempf@kontron.de>
+Signed-off-by: Shawn Guo <shawnguo@kernel.org>
+---
+ arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-s.dts | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-s.dts b/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-s.dts
+index d17abb5158351..3912ac2446d7b 100644
+--- a/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-s.dts
++++ b/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-s.dts
+@@ -70,7 +70,9 @@
+ 		regulator-name = "rst-usb-eth2";
+ 		pinctrl-names = "default";
+ 		pinctrl-0 = <&pinctrl_usb_eth2>;
+-		gpio = <&gpio3 2 GPIO_ACTIVE_LOW>;
++		gpio = <&gpio3 2 GPIO_ACTIVE_HIGH>;
++		enable-active-high;
++		regulator-always-on;
+ 	};
+ 
+ 	reg_vdd_5v: regulator-5v {
+-- 
+cgit 1.2.3-1.el7
+
+
+From ca6f9d85d5944046a241b325700c1ca395651c28 Mon Sep 17 00:00:00 2001
+From: Frieder Schrempf <frieder.schrempf@kontron.de>
+Date: Fri, 15 Oct 2021 14:48:39 +0200
+Subject: arm64: dts: imx8mm-kontron: Fix CAN SPI clock frequency
+
+The MCP2515 can be used with an SPI clock of up to 10 MHz. Set the
+limit accordingly to prevent any performance issues caused by the
+really low clock speed of 100 kHz.
+
+This removes the arbitrarily low limit on the SPI frequency, that was
+caused by a typo in the original dts.
+
+Without this change, receiving CAN messages on the board beyond a
+certain bitrate will cause overrun errors (see 'ip -det -stat link show
+can0').
+
+With this fix, receiving messages on the bus works without any overrun
+errors for bitrates up to 1 MBit.
+
+Fixes: 8668d8b2e67f ("arm64: dts: Add the Kontron i.MX8M Mini SoMs and baseboards")
+Cc: stable@vger.kernel.org
+Signed-off-by: Frieder Schrempf <frieder.schrempf@kontron.de>
+Signed-off-by: Shawn Guo <shawnguo@kernel.org>
+---
+ arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-s.dts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-s.dts b/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-s.dts
+index 3912ac2446d7b..a52cdfb0920e5 100644
+--- a/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-s.dts
++++ b/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-s.dts
+@@ -97,7 +97,7 @@
+ 		clocks = <&osc_can>;
+ 		interrupt-parent = <&gpio4>;
+ 		interrupts = <28 IRQ_TYPE_EDGE_FALLING>;
+-		spi-max-frequency = <100000>;
++		spi-max-frequency = <10000000>;
+ 		vdd-supply = <&reg_vdd_3v3>;
+ 		xceiver-supply = <&reg_vdd_5v>;
+ 	};
+-- 
+cgit 1.2.3-1.el7
+
+
+From 0b28c41e3c951ea3d4f012cfa9da5ebd6512cf6e Mon Sep 17 00:00:00 2001
+From: Frieder Schrempf <frieder.schrempf@kontron.de>
+Date: Fri, 15 Oct 2021 14:48:40 +0200
+Subject: arm64: dts: imx8mm-kontron: Fix connection type for VSC8531 RGMII PHY
+
+Previously we falsely relied on the PHY driver to unconditionally
+enable the internal RX delay. Since the following fix for the PHY
+driver this is not the case anymore:
+
+commit 7b005a1742be ("net: phy: mscc: configure both RX and TX internal
+delays for RGMII")
+
+In order to enable the delay we need to set the connection type to
+"rgmii-rxid". Without the RX delay the ethernet is not functional at
+all.
+
+Fixes: 8668d8b2e67f ("arm64: dts: Add the Kontron i.MX8M Mini SoMs and baseboards")
+Cc: stable@vger.kernel.org
+Signed-off-by: Frieder Schrempf <frieder.schrempf@kontron.de>
+Signed-off-by: Shawn Guo <shawnguo@kernel.org>
+---
+ arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-s.dts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-s.dts b/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-s.dts
+index a52cdfb0920e5..e99e7644ff392 100644
+--- a/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-s.dts
++++ b/arch/arm64/boot/dts/freescale/imx8mm-kontron-n801x-s.dts
+@@ -113,7 +113,7 @@
+ &fec1 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_enet>;
+-	phy-connection-type = "rgmii";
++	phy-connection-type = "rgmii-rxid";
+ 	phy-handle = <&ethphy>;
+ 	status = "okay";
+ 
+-- 
+cgit 1.2.3-1.el7
+
+
+From e091b836a3baee4c8b1423a969589196b88a9e06 Mon Sep 17 00:00:00 2001
+From: Amit Pundir <amit.pundir@linaro.org>
+Date: Thu, 14 Oct 2021 16:54:10 +0300
+Subject: Revert "arm64: dts: qcom: sm8250: remove bus clock from the mdss node
+ for sm8250 target"
+
+This reverts commit 001ce9785c0674d913531345e86222c965fc8bf4.
+
+This upstream commit broke AOSP (post Android 12 merge) build
+on RB5. The device either silently crashes into USB crash mode
+after android boot animation or we see a blank blue screen
+with following dpu errors in dmesg:
+
+[  T444] hw recovery is not complete for ctl:3
+[  T444] [drm:dpu_encoder_phys_vid_prepare_for_kickoff:539] [dpu error]enc31 intf1 ctl 3 reset failure: -22
+[  T444] [drm:dpu_encoder_phys_vid_wait_for_commit_done:513] [dpu error]vblank timeout
+[  T444] [drm:dpu_kms_wait_for_commit_done:454] [dpu error]wait for commit done returned -110
+[    C7] [drm:dpu_encoder_frame_done_timeout:2127] [dpu error]enc31 frame done timeout
+[  T444] [drm:dpu_encoder_phys_vid_wait_for_commit_done:513] [dpu error]vblank timeout
+[  T444] [drm:dpu_kms_wait_for_commit_done:454] [dpu error]wait for commit done returned -110
+
+Fixes: 001ce9785c06 ("arm64: dts: qcom: sm8250: remove bus clock from the mdss node for sm8250 target")
+Signed-off-by: Amit Pundir <amit.pundir@linaro.org>
+Signed-off-by: Dmitry Baryshkov <dmitry.baryshkov@linaro.org>
+Signed-off-by: Bjorn Andersson <bjorn.andersson@linaro.org>
+Link: https://lore.kernel.org/r/20211014135410.4136412-1-dmitry.baryshkov@linaro.org
+---
+ arch/arm64/boot/dts/qcom/sm8250.dtsi | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/sm8250.dtsi b/arch/arm64/boot/dts/qcom/sm8250.dtsi
+index 8c15d9fed08f0..d12e4cbfc8527 100644
+--- a/arch/arm64/boot/dts/qcom/sm8250.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8250.dtsi
+@@ -2590,9 +2590,10 @@
+ 			power-domains = <&dispcc MDSS_GDSC>;
+ 
+ 			clocks = <&dispcc DISP_CC_MDSS_AHB_CLK>,
++				 <&gcc GCC_DISP_HF_AXI_CLK>,
+ 				 <&gcc GCC_DISP_SF_AXI_CLK>,
+ 				 <&dispcc DISP_CC_MDSS_MDP_CLK>;
+-			clock-names = "iface", "nrt_bus", "core";
++			clock-names = "iface", "bus", "nrt_bus", "core";
+ 
+ 			assigned-clocks = <&dispcc DISP_CC_MDSS_MDP_CLK>;
+ 			assigned-clock-rates = <460000000>;
+-- 
+cgit 1.2.3-1.el7
+
+
+From 05d5da3cb11c91c39e607066d3313a6ce621796a Mon Sep 17 00:00:00 2001
+From: Christoph Niedermaier <cniedermaier@dh-electronics.com>
+Date: Mon, 25 Oct 2021 09:37:06 +0200
+Subject: MAINTAINERS: Add maintainers for DHCOM i.MX6 and DHCOM/DHCOR STM32MP1
+
+Add maintainers for DH electronics DHCOM i.MX6
+and DHCOM/DHCOR STM32MP1 boards.
+
+Signed-off-by: Christoph Niedermaier <cniedermaier@dh-electronics.com>
+Cc: linux-arm-kernel@lists.infradead.org
+Cc: kernel@dh-electronics.com
+Cc: arnd@arndb.de
+Link: https://lore.kernel.org/r/20211025073706.2794-1-cniedermaier@dh-electronics.com'
+To: soc@kernel.org
+To: linux-kernel@vger.kernel.org
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ MAINTAINERS | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 8d118d7957d26..6fbcb632649f9 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -5458,6 +5458,19 @@ F:	include/net/devlink.h
+ F:	include/uapi/linux/devlink.h
+ F:	net/core/devlink.c
+ 
++DH ELECTRONICS IMX6 DHCOM BOARD SUPPORT
++M:	Christoph Niedermaier <cniedermaier@dh-electronics.com>
++L:	kernel@dh-electronics.com
++S:	Maintained
++F:	arch/arm/boot/dts/imx6*-dhcom-*
++
++DH ELECTRONICS STM32MP1 DHCOM/DHCOR BOARD SUPPORT
++M:	Marek Vasut <marex@denx.de>
++L:	kernel@dh-electronics.com
++S:	Maintained
++F:	arch/arm/boot/dts/stm32mp1*-dhcom-*
++F:	arch/arm/boot/dts/stm32mp1*-dhcor-*
++
+ DIALOG SEMICONDUCTOR DRIVERS
+ M:	Support Opensource <support.opensource@diasemi.com>
+ S:	Supported
+-- 
+cgit 1.2.3-1.el7
+
