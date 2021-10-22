@@ -1,0 +1,161 @@
+From 8603caaec98f7a46419a661f306abfaf2f18ec4b Mon Sep 17 00:00:00 2001
+From: Lorenzo Bianconi <lorenzo@kernel.org>
+Date: Fri, 22 Oct 2021 11:02:31 +0200
+Subject: mt76: mt7921: fix mt7921s Kconfig
+
+Add missing MMC dependency in mt7921s Kconfig:
+
+ld: drivers/net/wireless/mediatek/mt76/sdio.o: in function `mt76s_rr':
+sdio.c:(.text+0x1263): undefined reference to `sdio_claim_host'
+ld: sdio.c:(.text+0x1278): undefined reference to `sdio_writel'
+ld: sdio.c:(.text+0x12c8): undefined reference to `sdio_writel'
+ld: sdio.c:(.text+0x1327): undefined reference to `sdio_readl'
+ld: sdio.c:(.text+0x134d): undefined reference to `sdio_writel'
+ld: sdio.c:(.text+0x138c): undefined reference to `sdio_readl'
+ld: sdio.c:(.text+0x140f): undefined reference to `sdio_readl'
+ld: sdio.c:(.text+0x1498): undefined reference to `sdio_readl'
+ld: sdio.c:(.text+0x14e5): undefined reference to `sdio_release_host'
+ld: drivers/net/wireless/mediatek/mt76/sdio.o: in function `mt76s_wr':
+sdio.c:(.text+0x1599): undefined reference to `sdio_claim_host'
+ld: sdio.c:(.text+0x15ae): undefined reference to `sdio_writel'
+ld: sdio.c:(.text+0x15f9): undefined reference to `sdio_writel'
+ld: sdio.c:(.text+0x1646): undefined reference to `sdio_writel'
+ld: sdio.c:(.text+0x16a5): undefined reference to `sdio_readl'
+ld: sdio.c:(.text+0x16cb): undefined reference to `sdio_writel'
+ld: sdio.c:(.text+0x170a): undefined reference to `sdio_readl'
+ld: sdio.c:(.text+0x1782): undefined reference to `sdio_readl'
+ld: sdio.c:(.text+0x17e9): undefined reference to `sdio_release_host'
+
+Fixes: 48fab5bbef409 ("mt76: mt7921: introduce mt7921s support")
+Reported-by: Randy Dunlap <rdunlap@infradead.org>
+Tested-by: Randy Dunlap <rdunlap@infradead.org>
+Signed-off-by: Lorenzo Bianconi <lorenzo@kernel.org>
+Signed-off-by: Kalle Valo <kvalo@codeaurora.org>
+Link: https://lore.kernel.org/r/1ce6cb04ba1ab5aabd2b06b45fd8266537ef5359.1634893214.git.lorenzo@kernel.org
+---
+ drivers/net/wireless/mediatek/mt76/mt7921/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/net/wireless/mediatek/mt76/mt7921/Kconfig b/drivers/net/wireless/mediatek/mt76/mt7921/Kconfig
+index ce3a062279013..71154fc2a87ca 100644
+--- a/drivers/net/wireless/mediatek/mt76/mt7921/Kconfig
++++ b/drivers/net/wireless/mediatek/mt76/mt7921/Kconfig
+@@ -19,6 +19,7 @@ config MT7921S
+ 	select MT76_SDIO
+ 	select MT7921_COMMON
+ 	depends on MAC80211
++	depends on MMC
+ 	help
+ 	  This adds support for MT7921S 802.11ax 2x2:2SS wireless devices.
+ 
+-- 
+cgit 1.2.3-1.el7
+
+
+From a88cae727b3e031e1dfd03b5e03eec48f9ef9e6a Mon Sep 17 00:00:00 2001
+From: Randy Dunlap <rdunlap@infradead.org>
+Date: Fri, 22 Oct 2021 16:32:51 -0700
+Subject: mt76: mt7921: fix Wformat build warning
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+ARRAY_SIZE() is of type size_t, so the format specfier should
+be %zu instead of %lu.
+
+Fixes this build warning:
+
+../drivers/net/wireless/mediatek/mt76/mt7921/main.c: In function ‘mt7921_get_et_stats’:
+../drivers/net/wireless/mediatek/mt76/mt7921/main.c:1024:26: warning: format ‘%lu’ expects argument of type ‘long unsigned int’, but argument 4 has type ‘unsigned int’ [-Wformat=]
+   dev_err(dev->mt76.dev, "ei: %d  SSTATS_LEN: %lu",
+
+Signed-off-by: Randy Dunlap <rdunlap@infradead.org>
+Cc: Sean Wang <sean.wang@mediatek.com>
+Cc: linux-wireless@vger.kernel.org
+Cc: Felix Fietkau <nbd@nbd.name>
+Cc: Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
+Cc: Ryder Lee <ryder.lee@mediatek.com>
+Cc: Kalle Valo <kvalo@codeaurora.org>
+Signed-off-by: Kalle Valo <kvalo@codeaurora.org>
+Link: https://lore.kernel.org/r/20211022233251.29987-1-rdunlap@infradead.org
+---
+ drivers/net/wireless/mediatek/mt76/mt7921/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/mediatek/mt76/mt7921/main.c b/drivers/net/wireless/mediatek/mt76/mt7921/main.c
+index 35a490c049e90..633c6d2a57acd 100644
+--- a/drivers/net/wireless/mediatek/mt76/mt7921/main.c
++++ b/drivers/net/wireless/mediatek/mt76/mt7921/main.c
+@@ -1021,7 +1021,7 @@ void mt7921_get_et_stats(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+ 
+ 	ei += wi.worker_stat_count;
+ 	if (ei != ARRAY_SIZE(mt7921_gstrings_stats))
+-		dev_err(dev->mt76.dev, "ei: %d  SSTATS_LEN: %lu",
++		dev_err(dev->mt76.dev, "ei: %d  SSTATS_LEN: %zu",
+ 			ei, ARRAY_SIZE(mt7921_gstrings_stats));
+ }
+ 
+-- 
+cgit 1.2.3-1.el7
+
+
+From 753453afacc0243bd45de45e34218a8d17493e8f Mon Sep 17 00:00:00 2001
+From: Nick Hainke <vincent@systemli.org>
+Date: Fri, 8 Oct 2021 00:57:25 +0200
+Subject: mt76: mt7615: mt7622: fix ibss and meshpoint
+
+commit 7f4b7920318b ("mt76: mt7615: add ibss support") introduced IBSS
+and commit f4ec7fdf7f83 ("mt76: mt7615: enable support for mesh")
+meshpoint support.
+
+Both used in the "get_omac_idx"-function:
+
+	if (~mask & BIT(HW_BSSID_0))
+		return HW_BSSID_0;
+
+With commit d8d59f66d136 ("mt76: mt7615: support 16 interfaces") the
+ibss and meshpoint mode should "prefer hw bssid slot 1-3". However,
+with that change the ibss or meshpoint mode will not send any beacon on
+the mt7622 wifi anymore. Devices were still able to exchange data but
+only if a bssid already existed. Two mt7622 devices will never be able
+to communicate.
+
+This commits reverts the preferation of slot 1-3 for ibss and
+meshpoint. Only NL80211_IFTYPE_STATION will still prefer slot 1-3.
+
+Tested on Banana Pi R64.
+
+Fixes: d8d59f66d136 ("mt76: mt7615: support 16 interfaces")
+Signed-off-by: Nick Hainke <vincent@systemli.org>
+Acked-by: Felix Fietkau <nbd@nbd.name>
+Signed-off-by: Kalle Valo <kvalo@codeaurora.org>
+Link: https://lore.kernel.org/r/20211007225725.2615-1-vincent@systemli.org
+---
+ drivers/net/wireless/mediatek/mt76/mt7615/main.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/net/wireless/mediatek/mt76/mt7615/main.c b/drivers/net/wireless/mediatek/mt76/mt7615/main.c
+index 343e157261cac..890d9b07e1563 100644
+--- a/drivers/net/wireless/mediatek/mt76/mt7615/main.c
++++ b/drivers/net/wireless/mediatek/mt76/mt7615/main.c
+@@ -135,8 +135,6 @@ static int get_omac_idx(enum nl80211_iftype type, u64 mask)
+ 	int i;
+ 
+ 	switch (type) {
+-	case NL80211_IFTYPE_MESH_POINT:
+-	case NL80211_IFTYPE_ADHOC:
+ 	case NL80211_IFTYPE_STATION:
+ 		/* prefer hw bssid slot 1-3 */
+ 		i = get_free_idx(mask, HW_BSSID_1, HW_BSSID_3);
+@@ -160,6 +158,8 @@ static int get_omac_idx(enum nl80211_iftype type, u64 mask)
+ 			return HW_BSSID_0;
+ 
+ 		break;
++	case NL80211_IFTYPE_ADHOC:
++	case NL80211_IFTYPE_MESH_POINT:
+ 	case NL80211_IFTYPE_MONITOR:
+ 	case NL80211_IFTYPE_AP:
+ 		/* ap uses hw bssid 0 and ext bssid */
+-- 
+cgit 1.2.3-1.el7
+
