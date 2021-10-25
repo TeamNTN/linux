@@ -1,0 +1,25 @@
+From 3906fe9bb7f1a2c8667ae54e967dc8690824f4ea Mon Sep 17 00:00:00 2001
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Date: Mon, 25 Oct 2021 11:30:31 -0700
+Subject: Linux 5.15-rc7
+
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 91297670da8e0..30c7c81d0437a 100644
+--- a/Makefile
++++ b/Makefile
+@@ -2,7 +2,7 @@
+ VERSION = 5
+ PATCHLEVEL = 15
+ SUBLEVEL = 0
+-EXTRAVERSION = -rc6
++EXTRAVERSION = -rc7
+ NAME = Opossums on Parade
+ 
+ # *DOCUMENTATION*
+-- 
+cgit 1.2.3-1.el7
+
